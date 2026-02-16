@@ -1,11 +1,15 @@
 package com.megan.dataproject.controller;
 
+import com.megan.dataproject.model.Student;
+import com.megan.dataproject.model.StudentClass;
 import com.megan.dataproject.payload.ApiResponse;
-import com.megan.dataproject.service.CsvToDatabaseService;
-import com.megan.dataproject.service.ExcelGeneratorService;
-import com.megan.dataproject.service.ExcelToCsvService;
-import com.megan.dataproject.service.JobService;
+import com.megan.dataproject.payload.ExportResponse;
+import com.megan.dataproject.service.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +28,7 @@ public class StudentController {
     private final ExcelToCsvService excelToCsvService;
     private final CsvToDatabaseService csvToDatabaseService;
     private final JobService jobService;
+    private final ReportService reportService;
 
 
     // 1. POLLING ENDPOINT (Frontend calls this to check job status)
@@ -77,5 +82,56 @@ public class StudentController {
             return ResponseEntity.internalServerError()
                     .body(ApiResponse.error("File upload failed: " + e.getMessage()));
         }
+    }
+    // D) REPORT ENDPOINTS
+
+    // D1) Get paginated students with search and filter
+    @GetMapping("/report")
+    public ResponseEntity<ApiResponse<Page<Student>>> getReport(
+            @RequestParam(required = false) Long studentId,
+            @RequestParam(required = false) StudentClass studentClass,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "studentId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Student> students = reportService.getStudents(studentId, studentClass, pageable);
+
+        return ResponseEntity.ok(ApiResponse.success("Report data retrieved", students));
+    }
+
+    // D2) Export to CSV
+    @GetMapping("/report/export/csv")
+    public ResponseEntity<ApiResponse<ExportResponse>> exportToCsv(
+            @RequestParam(required = false) Long studentId,
+            @RequestParam(required = false) StudentClass studentClass) throws IOException {
+
+        ExportResponse export = reportService.exportToCsv(studentId, studentClass);
+        return ResponseEntity.ok(ApiResponse.success("CSV export generated", export));
+    }
+
+    // D3) Export to Excel
+    @GetMapping("/report/export/excel")
+    public ResponseEntity<ApiResponse<ExportResponse>> exportToExcel(
+            @RequestParam(required = false) Long studentId,
+            @RequestParam(required = false) StudentClass studentClass) throws IOException {
+
+        ExportResponse export = reportService.exportToExcel(studentId, studentClass);
+        return ResponseEntity.ok(ApiResponse.success("Excel export generated", export));
+    }
+
+    // D4) Export to PDF
+    @GetMapping("/report/export/pdf")
+    public ResponseEntity<ApiResponse<ExportResponse>> exportToPdf(
+            @RequestParam(required = false) Long studentId,
+            @RequestParam(required = false) StudentClass studentClass) {
+
+        ExportResponse export = reportService.exportToPdf(studentId, studentClass);
+        return ResponseEntity.ok(ApiResponse.success("PDF export generated", export));
     }
 }

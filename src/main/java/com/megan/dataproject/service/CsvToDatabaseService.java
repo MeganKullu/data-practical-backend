@@ -56,8 +56,8 @@ public class CsvToDatabaseService {
                 batch.add(values);
                 rowCount++;
 
-                //Push to DB every 1000 records
-                if (batch.size() >= 1000) {
+                //Push to DB every 5000 records for better performance
+                if (batch.size() >= 5000) {
                     jdbcTemplate.batchUpdate(sql, batch);
                     batch.clear();
 

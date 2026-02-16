@@ -21,7 +21,7 @@ public class AsyncConfig {
         // Max pool size - maximum threads when queue is full
         executor.setMaxPoolSize(8);
 
-        // Queue capacity - tasks waiting when core threads are busy
+        // Queue capacity
         executor.setQueueCapacity(100);
 
         // Thread name prefix for debugging

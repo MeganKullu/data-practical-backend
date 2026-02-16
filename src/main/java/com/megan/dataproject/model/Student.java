@@ -5,11 +5,14 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "students")
+@Table(name = "students", indexes = {
+    @Index(name = "idx_student_class", columnList = "class"),
+    @Index(name = "idx_student_score", columnList = "score"),
+    @Index(name = "idx_student_class_score", columnList = "class, score")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Student {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
