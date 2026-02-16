@@ -36,3 +36,6 @@ build/
 .env
 .env.local
 
+### Local config ###
+src/main/resources/application-local.yaml
+

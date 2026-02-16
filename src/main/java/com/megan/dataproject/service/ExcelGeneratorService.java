@@ -28,7 +28,6 @@ public class ExcelGeneratorService {
             Sheet sheet = workbook.createSheet("Students");
 
             // Header
-
             Row header = sheet.createRow(0);
             String[] cols = {"studentId, firstName","lastName", "DOB","class","score"};
             for (int i =0; i < cols.length; i++) {

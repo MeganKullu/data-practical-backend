@@ -5,9 +5,7 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: ${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    url: ${DATABASE_URL:jdbc:postgresql://ep-hidden-poetry-ai90pmbu-pooler.c-4.us-east-1.aws.neon.tech/neondb?user=neondb_owner&password=npg_8iUyFogAIbX2&sslmode=require&channelBinding=require}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
