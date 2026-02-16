@@ -43,6 +43,7 @@ public class ExcelToCsvService {
 
                 Sheet sheet = workbook.getSheetAt(0);
                 boolean isHeader = true;
+                long rowCount = 0;
 
                 for (Row row : sheet) {
                     if (isHeader) {
@@ -65,11 +66,17 @@ public class ExcelToCsvService {
                     double updatedScore = originalScore + 10;
 
                     // 4. Write to CSV
-                    String csvRow = String.format("%s,%s,%s,%s,%s, %.2f",
+                    String csvRow = String.format("%s,%s,%s,%s,%s,%.2f",
                             id, fName, lName, dob, studentClass, updatedScore);
 
                     writer.write(csvRow);
                     writer.newLine();
+
+                    rowCount++;
+                    // Update progress every 10000 records (total unknown for streaming)
+                    if (rowCount % 10000 == 0) {
+                        jobService.updateProgress(jobId, rowCount, 0);
+                    }
                 }
             }
 

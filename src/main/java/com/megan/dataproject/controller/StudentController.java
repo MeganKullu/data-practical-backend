@@ -25,9 +25,8 @@ public class StudentController {
     private final CsvToDatabaseService csvToDatabaseService;
     private final JobService jobService;
 
-    // ==========================================
+
     // 1. POLLING ENDPOINT (Frontend calls this to check job status)
-    // ==========================================
     @GetMapping("/status/{jobId}")
     public ResponseEntity<ApiResponse<JobService.JobInfo>> getJobStatus(@PathVariable String jobId) {
         JobService.JobInfo jobInfo = jobService.getJob(jobId);

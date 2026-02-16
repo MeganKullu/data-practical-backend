@@ -2,7 +2,6 @@ package com.megan.dataproject.service;
 
 import com.megan.dataproject.model.JobStatus;
 import lombok.RequiredArgsConstructor;
-import org.apache.xmlbeans.impl.xb.ltgfmt.TestCase;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -35,35 +34,46 @@ public class CsvToDatabaseService {
             String line;
             List<Object[]> batch = new ArrayList<>();
             boolean isHeader = true;
+            long rowCount = 0;
 
             while ((line = br.readLine()) != null) {
                 if (isHeader) { isHeader = false; continue;}
 
                 String[] data = line.split(",");
 
-                // Student database score = student Excel score + 5
-                double csvScore = Double.parseDouble(data[5]);
+                // Student database score = student CSV score + 5
+                double csvScore = Double.parseDouble(data[5].trim());
                 double finalScore = csvScore + 5;
 
                 Object[] values = new Object[] {
-                        data[1], //firstName
-                        data[2], //lastName
-                        LocalDate.parse(data[3]), // DOB
-                        data[4], //studentClass
+                        data[1].trim(), //firstName
+                        data[2].trim(), //lastName
+                        LocalDate.parse(data[3].trim()), // DOB
+                        data[4].trim(), //studentClass
                         finalScore
                 };
 
                 batch.add(values);
+                rowCount++;
 
                 //Push to DB every 1000 records
-
                 if (batch.size() >= 1000) {
                     jdbcTemplate.batchUpdate(sql, batch);
                     batch.clear();
-                }
 
+                    // Update progress every 10000 records
+                    if (rowCount % 10000 == 0) {
+                        jobService.updateProgress(jobId, rowCount, 0);
+                    }
+                }
             }
-            jobService.updateStatus(jobId, JobStatus.COMPLETED, null );
+
+            // Flush remaining records that didn't reach batch size
+            if (!batch.isEmpty()) {
+                jdbcTemplate.batchUpdate(sql, batch);
+            }
+
+            jobService.updateStatus(jobId, JobStatus.COMPLETED, null);
         }
         catch (Exception e) {
             jobService.updateStatus(jobId, JobStatus.FAILED, e.getMessage());

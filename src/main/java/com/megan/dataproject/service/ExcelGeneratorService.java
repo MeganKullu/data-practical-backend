@@ -34,7 +34,7 @@ public class ExcelGeneratorService {
 
             // Header
             Row header = sheet.createRow(0);
-            String[] cols = {"studentId, firstName","lastName", "DOB","class","score"};
+            String[] cols = {"studentId", "firstName", "lastName", "DOB", "class", "score"};
             for (int i =0; i < cols.length; i++) {
                 header.createCell(i).setCellValue(cols[i]);
             }
@@ -50,6 +50,10 @@ public class ExcelGeneratorService {
                row.createCell(4).setCellValue(StudentClass.getRandom().name());
                row.createCell(5).setCellValue(55 + (random.nextDouble() * 20));// 55 to 75
 
+               // Update progress every 10000 records
+               if (i % 10000 == 0) {
+                   jobService.updateProgress(jobId, i, count);
+               }
             }
 
             try (FileOutputStream out = new FileOutputStream(fullPath)) {
