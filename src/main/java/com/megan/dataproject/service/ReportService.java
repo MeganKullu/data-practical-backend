@@ -45,10 +45,10 @@ public class ReportService {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))) {
-            writer.println("studentId,firstName,lastName,DOB,class,score");
+            writer.print("studentId,firstName,lastName,DOB,class,score\n");
 
             for (Student s : students) {
-                writer.printf("%d,%s,%s,%s,%s,%.2f%n",
+                writer.printf("%d,%s,%s,%s,%s,%.2f\n",
                         s.getStudentId(),
                         s.getFirstName(),
                         s.getLastName(),

@@ -13,6 +13,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +23,7 @@ public class ExcelGeneratorService {
     private final JobService jobService;
 
     @Async
-    public String generateStudentsExcel(String jobId, int count) throws IOException {
+    public CompletableFuture<String> generateStudentsExcel(String jobId, int count) throws IOException {
         String fileName = "StudentData_" + System.currentTimeMillis() + ".xlsx";
         String fullPath = storageService.getPath(fileName);
 
@@ -67,7 +68,7 @@ public class ExcelGeneratorService {
             jobService.updateStatus(jobId, JobStatus.FAILED, e.getMessage());
         }
 
-        return fullPath;
+        return CompletableFuture.completedFuture(fullPath);
 
     }
 

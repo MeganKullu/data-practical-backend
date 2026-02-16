@@ -27,7 +27,7 @@ public class CsvToDatabaseService {
 
         String sql = "INSERT INTO students(first_name, last_name, dob, class, score) VALUES (?,?,?,?,?)";
 
-        try (BufferedReader br = new Files.newBufferedReader(Paths.get(csvPath))){
+        try (BufferedReader br = Files.newBufferedReader(Paths.get(csvPath))) {
 
             jobService.updateStatus(jobId, JobStatus.PROCESSING, csvPath );
 
