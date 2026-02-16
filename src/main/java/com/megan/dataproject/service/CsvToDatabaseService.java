@@ -1,8 +1,10 @@
 package com.megan.dataproject.service;
 
+import com.megan.dataproject.model.JobStatus;
 import lombok.RequiredArgsConstructor;
 import org.apache.xmlbeans.impl.xb.ltgfmt.TestCase;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -18,12 +20,18 @@ import java.util.List;
 public class CsvToDatabaseService {
 
     private final JdbcTemplate jdbcTemplate;
+    private final JobService jobService;
 
-    public void uploadCsvToDatabase(String csvPath) throws IOException {
+    @Async
+    public void uploadCsvToDatabase(String jobId, String csvPath) throws IOException {
+
 
         String sql = "INSERT INTO students(first_name, last_name, dob, class, score) VALUES (?,?,?,?,?)";
 
         try (BufferedReader br = new Files.newBufferedReader(Paths.get(csvPath))){
+
+            jobService.updateStatus(jobId, JobStatus.PROCESSING, csvPath );
+
             String line;
             List<Object[]> batch = new ArrayList<>();
             boolean isHeader = true;
@@ -55,6 +63,10 @@ public class CsvToDatabaseService {
                 }
 
             }
+            jobService.updateStatus(jobId, JobStatus.COMPLETED, null );
+        }
+        catch (Exception e) {
+            jobService.updateStatus(jobId, JobStatus.FAILED, e.getMessage());
         }
     }
 }

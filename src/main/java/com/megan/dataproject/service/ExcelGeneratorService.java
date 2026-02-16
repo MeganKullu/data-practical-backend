@@ -1,10 +1,12 @@
 package com.megan.dataproject.service;
 
+import com.megan.dataproject.model.JobStatus;
 import com.megan.dataproject.model.StudentClass;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.FileOutputStream;
@@ -17,14 +19,17 @@ import java.util.Random;
 public class ExcelGeneratorService {
 
     private final FileStorageService storageService;
+    private final JobService jobService;
 
-    public String generateStudentsExcel(int count) throws IOException {
+    @Async
+    public String generateStudentsExcel(String jobId, int count) throws IOException {
         String fileName = "StudentData_" + System.currentTimeMillis() + ".xlsx";
         String fullPath = storageService.getPath(fileName);
 
         //Keep only 100 rows in memory
 
         try(SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
+            jobService.updateStatus(jobId, JobStatus.PROCESSING, null);
             Sheet sheet = workbook.createSheet("Students");
 
             // Header
@@ -52,7 +57,10 @@ public class ExcelGeneratorService {
             }
 
             workbook.dispose();
-
+            jobService.updateStatus(jobId, JobStatus.COMPLETED, fullPath);
+        }
+        catch (Exception e) {
+            jobService.updateStatus(jobId, JobStatus.FAILED, e.getMessage());
         }
 
         return fullPath;
