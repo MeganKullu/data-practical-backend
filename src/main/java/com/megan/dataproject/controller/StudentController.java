@@ -15,8 +15,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
 @RestController
@@ -40,6 +47,37 @@ public class StudentController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(ApiResponse.success("Job status retrieved", jobInfo));
+    }
+
+    // 2. DOWNLOAD FILE (After job completes, download the generated file)
+    @GetMapping("/download/{jobId}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable String jobId) {
+        try {
+            JobService.JobInfo jobInfo = jobService.getJob(jobId);
+            if (jobInfo == null || jobInfo.getResult() == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Path filePath = Paths.get(jobInfo.getResult());
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (!resource.exists()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            String fileName = filePath.getFileName().toString();
+            String contentType = fileName.endsWith(".xlsx")
+                    ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    : fileName.endsWith(".csv") ? "text/csv" : "application/octet-stream";
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .body(resource);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     // A) Generate Excel (Async)
