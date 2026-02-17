@@ -4,6 +4,7 @@ import com.megan.dataproject.model.Student;
 import com.megan.dataproject.model.StudentClass;
 import com.megan.dataproject.payload.ApiResponse;
 import com.megan.dataproject.payload.ExportResponse;
+import com.megan.dataproject.payload.PageResponse;
 import com.megan.dataproject.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -95,7 +96,7 @@ public class StudentController {
 
     // D1) Get paginated students with search and filter
     @GetMapping("/report")
-    public ResponseEntity<ApiResponse<Page<Student>>> getReport(
+    public ResponseEntity<ApiResponse<PageResponse<Student>>> getReport(
             @RequestParam(required = false) Long studentId,
             @RequestParam(required = false) StudentClass studentClass,
             @RequestParam(defaultValue = "0") int page,
@@ -110,7 +111,7 @@ public class StudentController {
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Student> students = reportService.getStudents(studentId, studentClass, pageable);
 
-        return ResponseEntity.ok(ApiResponse.success("Report data retrieved", students));
+        return ResponseEntity.ok(ApiResponse.success("Report data retrieved", PageResponse.from(students)));
     }
 
     // D2) Export to CSV
