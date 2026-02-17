@@ -1,0 +1,36 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: dataproject-db
+    environment:
+      POSTGRES_DB: dataproject
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dataproject"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Backend
+  backend:
+    build: .
+    container_name: dataproject-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/dataproject?user=postgres&password=postgres
+    ports:
+      - "8080:8080"
+    volumes:
+      - app_files:/var/log/applications/API/dataprocessing
+
+volumes:
+  postgres_data:
+  app_files:

@@ -16,7 +16,7 @@ Therefore, we stream everything:
 
 - **Writing Excel**: Using `SXSSFWorkbook` which only keeps 100 rows in memory at a time, flushing older rows to disk
 - **Reading Excel**: Using `excel-streaming-reader` (SAX parser under the hood) - reads row by row, never loads the whole file
-- **Database inserts**: Batching 5000 records at a time instead of one-by-one
+- **Database inserts**: Batching 10,000 records at a time instead of one-by-one
 
 ---
 
@@ -45,10 +45,10 @@ Per the requirements, scores get bumped at each stage:
 
 ```
 Excel (original)  ->  CSV (+10)  ->  Database (+5)
-     65.0              75.0            80.0
+      65                 75              80
 ```
 
-Total increase: +15 from Excel to database.
+Total increase: +15 from Excel to database. Scores are integers (55-75 initially).
 
 ---
 
@@ -61,7 +61,7 @@ Added indexes on columns we'll filter/search on:
 - `score` - might be useful
 - composite `(class, score)` - for combined queries
 
-Batch size is 5000 for inserts. Tried 1000 first but 5000 was noticeably faster. Going higher didn't help much and used more memory.
+Batch size is 10,000 for inserts. Tried smaller batches first but 10,000 was noticeably faster without using too much memory.
 
 ---
 
@@ -91,6 +91,7 @@ All responses follow the same structure:
 - `POST /api/students/process` - Excel -> CSV (multipart file upload)
 - `POST /api/students/upload` - CSV -> database (multipart file upload)
 - `GET /api/students/status/{jobId}` - check progress
+- `GET /api/students/download/{jobId}` - download generated file
 
 ### Reports:
 - `GET /api/students/report?page=0&size=20&studentClass=Class1` - paginated list
@@ -125,7 +126,8 @@ Services update progress every 10,000 records. More frequent updates would slow 
 ```
 src/main/java/com/megan/dataproject/
 ├── config/
-│   └── AsyncConfig.java           # thread pool setup
+│   ├── AsyncConfig.java           # thread pool setup
+│   └── RequestLoggingFilter.java  # request/response logging
 ├── controller/
 │   └── StudentController.java     # all the endpoints
 ├── model/
@@ -134,7 +136,8 @@ src/main/java/com/megan/dataproject/
 │   └── JobStatus.java             # enum: SUBMITTED, PROCESSING, etc.
 ├── payload/
 │   ├── ApiResponse.java           # wrapper for all responses
-│   └── ExportResponse.java        # for file exports
+│   ├── ExportResponse.java        # for file exports
+│   └── PageResponse.java          # pagination wrapper
 ├── repository/
 │   ├── StudentRepository.java     # JPA repo
 │   └── StudentSpecification.java  # dynamic query builder
@@ -170,14 +173,42 @@ Integration tests are ordered - they generate Excel, convert to CSV, upload to D
 
 ## Running Locally
 
+### Option 1: Docker Compose (Recommended)
+
+The easiest way to run locally - no need to set up PostgreSQL:
+
 ```bash
-# set your Neon database URL
+# Clone the repo
+git clone https://github.com/megankullu/dataproject.git
+cd dataproject
+
+# Start everything (PostgreSQL + Backend)
+docker-compose up -d
+
+# Check logs
+docker-compose logs -f backend
+
+# Stop when done
+docker-compose down
+```
+
+This will:
+- Start a PostgreSQL database on port 5432
+- Build and start the Spring Boot backend on port 8080
+- Create a persistent volume for uploaded/generated files
+
+The API will be available at `http://localhost:8080/api/students`
+
+### Option 2: With Your Own Database  
+
+```bash
+# Set your database URL
 export DATABASE_URL=jdbc:postgresql://ep-xxx.neon.tech/dataproject?sslmode=require&user=xxx&password=xxx
 
-# run the application
+# Run the application
 ./mvnw spring-boot:run
 
-# or build and run jar
+# Or build and run jar
 ./mvnw clean package -DskipTests
 java -jar target/dataproject-0.0.1-SNAPSHOT.jar
 ```
