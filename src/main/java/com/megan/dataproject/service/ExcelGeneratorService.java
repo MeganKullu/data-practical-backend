@@ -3,6 +3,7 @@ package com.megan.dataproject.service;
 import com.megan.dataproject.model.JobStatus;
 import com.megan.dataproject.model.StudentClass;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ExcelGeneratorService {
@@ -28,6 +30,8 @@ public class ExcelGeneratorService {
         String fullPath = storageService.getPath(fileName);
 
         //Keep only 100 rows in memory
+        long startTime = System.currentTimeMillis();
+        log.info("Job {} - Starting Excel generation: {} records", jobId, count);
 
         try(SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
             jobService.updateStatus(jobId, JobStatus.PROCESSING, null);
@@ -49,10 +53,12 @@ public class ExcelGeneratorService {
                row.createCell(2).setCellValue(randomAlpha(random,3,8));
                row.createCell(3).setCellValue(randomDate(random).toString());
                row.createCell(4).setCellValue(StudentClass.getRandom().name());
-               row.createCell(5).setCellValue(55 + (random.nextDouble() * 20));// 55 to 75
+               row.createCell(5).setCellValue(55 + random.nextInt(21)); // 55 to 75
 
                // Update progress every 10000 records
                if (i % 10000 == 0) {
+                   int percent = (int) ((i * 100L) / count);
+                   log.info("Job {} - Excel generation: {}/{} ({}%)", jobId, i, count, percent);
                    jobService.updateProgress(jobId, i, count);
                }
             }
@@ -63,8 +69,12 @@ public class ExcelGeneratorService {
 
             workbook.dispose();
             jobService.updateStatus(jobId, JobStatus.COMPLETED, fullPath);
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("Job {} - Excel generation COMPLETED in {}ms: {}", jobId, duration, fullPath);
         }
         catch (Exception e) {
+            long duration = System.currentTimeMillis() - startTime;
+            log.error("Job {} - Excel generation FAILED in {}ms: {}", jobId, duration, e.getMessage());
             jobService.updateStatus(jobId, JobStatus.FAILED, e.getMessage());
         }
 

@@ -29,6 +29,9 @@ public class ExcelToCsvService {
         String outputFileName = "ProcessedData_" + System.currentTimeMillis() + ".csv";
         String outputPath = storageService.getPath(outputFileName);
 
+        long startTime = System.currentTimeMillis();
+        log.info("Job {} - Starting Excel to CSV conversion", jobId);
+
         try {
             jobService.updateStatus(jobId, JobStatus.PROCESSING, null);
 
@@ -62,11 +65,11 @@ public class ExcelToCsvService {
                     String studentClass = getCellValue(row,4);
 
                     // 3. APPLY LOGIC: score + 10
-                    double originalScore = Double.parseDouble(getCellValue(row, 5));
-                    double updatedScore = originalScore + 10;
+                    int originalScore = (int) Double.parseDouble(getCellValue(row, 5));
+                    int updatedScore = originalScore + 10;
 
                     // 4. Write to CSV
-                    String csvRow = String.format("%s,%s,%s,%s,%s,%.2f",
+                    String csvRow = String.format("%s,%s,%s,%s,%s,%d",
                             id, fName, lName, dob, studentClass, updatedScore);
 
                     writer.write(csvRow);
@@ -75,16 +78,19 @@ public class ExcelToCsvService {
                     rowCount++;
                     // Update progress every 10000 records (total unknown for streaming)
                     if (rowCount % 10000 == 0) {
+                        log.info("Job {} - Excel to CSV: {} rows processed", jobId, rowCount);
                         jobService.updateProgress(jobId, rowCount, 0);
                     }
                 }
             }
 
             jobService.updateStatus(jobId, JobStatus.COMPLETED, outputPath);
-            log.info("Job {} completed successfully. Output: {}", jobId, outputPath);
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("Job {} - Excel to CSV COMPLETED in {}ms: {}", jobId, duration, outputPath);
 
         } catch (Exception e) {
-            log.error("Job {} failed: {}", jobId, e.getMessage(), e);
+            long duration = System.currentTimeMillis() - startTime;
+            log.error("Job {} - Excel to CSV FAILED in {}ms: {}", jobId, duration, e.getMessage());
             jobService.updateStatus(jobId, JobStatus.FAILED, e.getMessage());
         }
     }

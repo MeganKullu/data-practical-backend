@@ -25,7 +25,7 @@ Therefore, we stream everything:
 Processing 1M records takes a while. We can't block the HTTP request for 5 minutes - the connection would timeout and the user would think it's broken.
 
 Instead:
-1. User clicks "Generate" → backend immediately returns a `jobId`
+1. User clicks "Generate" -> backend immediately returns a `jobId`
 2. Heavy work happens in a background thread
 3. Frontend polls `/status/{jobId}` every 2 seconds to check progress
 4. When done, status shows `COMPLETED` with the file path
@@ -44,7 +44,7 @@ Thread pool config (in `AsyncConfig.java`):
 Per the requirements, scores get bumped at each stage:
 
 ```
-Excel (original)  →  CSV (+10)  →  Database (+5)
+Excel (original)  ->  CSV (+10)  ->  Database (+5)
      65.0              75.0            80.0
 ```
 
@@ -54,12 +54,24 @@ Total increase: +15 from Excel to database.
 
 ## Database
 
+Using Neon (serverless PostgreSQL).
+
 Added indexes on columns we'll filter/search on:
 - `class` - for the dropdown filter
 - `score` - might be useful
 - composite `(class, score)` - for combined queries
 
 Batch size is 5000 for inserts. Tried 1000 first but 5000 was noticeably faster. Going higher didn't help much and used more memory.
+
+---
+
+## Environment Setup
+
+Set the `DATABASE_URL` environment variable with your Neon connection string:
+
+```bash
+export DATABASE_URL=jdbc:postgresql://ep-xxx.us-east-2.aws.neon.tech/dataproject?sslmode=require&user=your_user&password=your_password
+```
 
 ---
 
@@ -76,8 +88,8 @@ All responses follow the same structure:
 
 ### Async operations (return jobId immediately):
 - `POST /api/students/generate?count=1000000` - make Excel
-- `POST /api/students/process` - Excel → CSV (multipart file upload)
-- `POST /api/students/upload` - CSV → database (multipart file upload)
+- `POST /api/students/process` - Excel -> CSV (multipart file upload)
+- `POST /api/students/upload` - CSV -> database (multipart file upload)
 - `GET /api/students/status/{jobId}` - check progress
 
 ### Reports:
@@ -96,7 +108,7 @@ The `JobService` keeps track of running jobs in a `ConcurrentHashMap`:
 
 ```java
 JobInfo {
-    status;         // SUBMITTED → PROCESSING → COMPLETED (or FAILED)
+    status;         // SUBMITTED -> PROCESSING -> COMPLETED (or FAILED)
     result;         // file path when done, error message if failed
     progress;       // 0-100
     processedCount; // how many rows done
@@ -130,8 +142,8 @@ src/main/java/com/megan/dataproject/
     ├── JobService.java            # tracks async jobs
     ├── FileStorageService.java    # handles file paths
     ├── ExcelGeneratorService.java # creates Excel files
-    ├── ExcelToCsvService.java     # Excel → CSV conversion
-    ├── CsvToDatabaseService.java  # CSV → PostgreSQL
+    ├── ExcelToCsvService.java     # Excel -> CSV conversion
+    ├── CsvToDatabaseService.java  # CSV -> PostgreSQL
     └── ReportService.java         # queries + exports
 ```
 
@@ -159,12 +171,13 @@ Integration tests are ordered - they generate Excel, convert to CSV, upload to D
 ## Running Locally
 
 ```bash
-# start with local profile (uses application-local.yaml)
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+# set your Neon database URL
+export DATABASE_URL=jdbc:postgresql://ep-xxx.neon.tech/dataproject?sslmode=require&user=xxx&password=xxx
+
+# run the application
+./mvnw spring-boot:run
 
 # or build and run jar
 ./mvnw clean package -DskipTests
-java -jar target/dataproject-0.0.1-SNAPSHOT.jar --spring.profiles.active=local
+java -jar target/dataproject-0.0.1-SNAPSHOT.jar
 ```
-
-Make sure PostgreSQL is running and the connection string in `application-local.yaml` is correct.

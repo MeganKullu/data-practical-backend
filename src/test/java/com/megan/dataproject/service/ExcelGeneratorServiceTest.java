@@ -134,8 +134,8 @@ class ExcelGeneratorServiceTest {
                 assertThat(firstName.length()).isBetween(3, 8);
 
                 // Verify score is between 55-75
-                double score = row.getCell(5).getNumericCellValue();
-                assertThat(score).isBetween(55.0, 75.0);
+                int score = (int) row.getCell(5).getNumericCellValue();
+                assertThat(score).isBetween(55, 75);
             }
         }
     }

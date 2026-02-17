@@ -40,14 +40,14 @@ class ReportServiceTest {
     @BeforeEach
     void setUp() {
         testStudents = Arrays.asList(
-                createStudent(1L, "John", "Doe", StudentClass.Class1, 85.0),
-                createStudent(2L, "Jane", "Smith", StudentClass.Class2, 90.0),
-                createStudent(3L, "Bob", "Wilson", StudentClass.Class1, 75.0)
+                createStudent(1L, "John", "Doe", StudentClass.Class1, 85),
+                createStudent(2L, "Jane", "Smith", StudentClass.Class2, 90),
+                createStudent(3L, "Bob", "Wilson", StudentClass.Class1, 75)
         );
     }
 
     private Student createStudent(Long id, String firstName, String lastName,
-                                   StudentClass studentClass, Double score) {
+                                   StudentClass studentClass, Integer score) {
         Student student = new Student();
         student.setStudentId(id);
         student.setFirstName(firstName);

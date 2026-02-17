@@ -28,6 +28,6 @@ public class Student {
     @Column(name = "class")
     private StudentClass studentClass;
 
-    private Double score;
+    private Integer score;
 
 }

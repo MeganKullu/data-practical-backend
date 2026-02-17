@@ -48,7 +48,7 @@ public class ReportService {
             writer.print("studentId,firstName,lastName,DOB,class,score\n");
 
             for (Student s : students) {
-                writer.printf("%d,%s,%s,%s,%s,%.2f\n",
+                writer.printf("%d,%s,%s,%s,%s,%d\n",
                         s.getStudentId(),
                         s.getFirstName(),
                         s.getLastName(),
@@ -145,7 +145,7 @@ public class ReportService {
                 table.addCell(new Phrase(s.getLastName(), dataFont));
                 table.addCell(new Phrase(s.getDOB().toString(), dataFont));
                 table.addCell(new Phrase(s.getStudentClass().name(), dataFont));
-                table.addCell(new Phrase(String.format("%.2f", s.getScore()), dataFont));
+                table.addCell(new Phrase(String.valueOf(s.getScore()), dataFont));
             }
 
             document.add(table);
