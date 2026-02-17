@@ -27,7 +27,7 @@ public class CsvToDatabaseService {
     public void uploadCsvToDatabase(String jobId, String csvPath) throws IOException {
 
 
-        String sql = "INSERT INTO students(first_name, last_name, dob, class, score) VALUES (?,?,?,?,?)";
+        String sql = "INSERT INTO students(student_id, first_name, last_name, dob, class, score) VALUES (?,?,?,?,?,?)";
 
         long startTime = System.currentTimeMillis();
         log.info("Job {} - Starting CSV to database upload: {}", jobId, csvPath);
@@ -51,6 +51,7 @@ public class CsvToDatabaseService {
                 int finalScore = csvScore + 5;
 
                 Object[] values = new Object[] {
+                        Long.parseLong(data[0].trim()), // studentId
                         data[1].trim(), //firstName
                         data[2].trim(), //lastName
                         LocalDate.parse(data[3].trim()), // DOB
@@ -61,16 +62,12 @@ public class CsvToDatabaseService {
                 batch.add(values);
                 rowCount++;
 
-                //Push to DB every 5000 records for better performance
-                if (batch.size() >= 5000) {
+                // Push to DB every 10000 records for better performance
+                if (batch.size() >= 10000) {
                     jdbcTemplate.batchUpdate(sql, batch);
                     batch.clear();
-
-                    // Update progress every 10000 records
-                    if (rowCount % 10000 == 0) {
-                        log.info("Job {} - CSV to DB: {} rows inserted", jobId, rowCount);
-                        jobService.updateProgress(jobId, rowCount, 0);
-                    }
+                    log.info("Job {} - CSV to DB: {} rows inserted", jobId, rowCount);
+                    jobService.updateProgress(jobId, rowCount, 0);
                 }
             }
 

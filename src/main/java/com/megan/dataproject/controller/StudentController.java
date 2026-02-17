@@ -85,6 +85,14 @@ public class StudentController {
     }
     // D) REPORT ENDPOINTS
 
+    // D0) Get total count of students
+    @GetMapping("/count")
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getCount() {
+        Page<Student> page = reportService.getStudents(null, null, PageRequest.of(0, 1));
+        return ResponseEntity.ok(ApiResponse.success("Count retrieved",
+            Map.of("total", page.getTotalElements())));
+    }
+
     // D1) Get paginated students with search and filter
     @GetMapping("/report")
     public ResponseEntity<ApiResponse<Page<Student>>> getReport(
