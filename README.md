@@ -30,7 +30,7 @@ Instead:
 3. Frontend polls `/status/{jobId}` every 2 seconds to check progress
 4. When done, status shows `COMPLETED` with the file path
 
-We're using Spring's `@Async` annotation. Tried `CompletableFuture` first but `@Async` is cleaner - just annotate the method and Spring handles the threading.
+We're using Spring's `@Async` annotation. 
 
 Thread pool config (in `AsyncConfig.java`):
 - 4 core threads (always running)
@@ -175,7 +175,7 @@ Integration tests are ordered - they generate Excel, convert to CSV, upload to D
 
 ### Option 1: Docker Compose (Recommended)
 
-The easiest way to run locally - no need to set up PostgreSQL:
+The easiest way to run locally
 
 ```bash
 # Clone the repo
@@ -191,13 +191,6 @@ docker-compose logs -f backend
 # Stop when done
 docker-compose down
 ```
-
-This will:
-- Start a PostgreSQL database on port 5432
-- Build and start the Spring Boot backend on port 8080
-- Create a persistent volume for uploaded/generated files
-
-The API will be available at `http://localhost:8080/api/students`
 
 ### Option 2: With Your Own Database  
 
